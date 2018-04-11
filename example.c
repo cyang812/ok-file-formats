@@ -1,6 +1,8 @@
-#include <stdio.h>
+#include "example.h"
+#include "user_file_buf.h"
 #include "ok_png.h"
 #include "ok_jpg.h"
+#include <stdio.h>
 
 #define PNG_PATH "\\testpng.png"
 #define JPG_PATH "\\testjpg.jpg"
@@ -133,10 +135,86 @@ uint8_t dec_jpg(uint8_t idx)
     return 0;
 }
 
+void dec_png_buf()
+{
+	FILE_BUF *file = fopen_buf(test_png, sizeof(test_png));
+	if(!file)
+	{
+		printf("open file err!\n");
+	}
+	else
+	{
+		printf("fsize = %d\n", file->fSize);
+	}
+
+    ok_png *image = ok_png_read(file, OK_PNG_COLOR_FORMAT_BGRA | OK_PNG_FLIP_Y);
+    fclose_buf(file);
+
+    if(image->data)
+    {
+    	printf("Got image ");
+        printf(" Size: %li x %li\n", (uint32_t)image->width, (uint32_t)image->height);
+
+		uint32_t xsize = image->width;
+		uint32_t ysize = image->height;
+		uint32_t length = image->width * image->height * 4;
+		uint8_t *dst = image->data;
+
+		writeToBMP(dst, length, 3, xsize, ysize);
+    }
+    else
+    {
+		printf("err msg = %s\n", image->error_message);
+    }
+
+    ok_png_free(image);
+}
+
+void dec_jpg_buf()
+{
+	FILE_BUF *file = fopen_buf(test_jpg, sizeof(test_jpg));
+	if(!file)
+	{
+		printf("open file err!\n");
+	}
+	else
+	{
+		printf("fsize = %d\n", file->fSize);
+	}
+
+    ok_jpg *image = ok_jpg_read(file, OK_JPG_COLOR_FORMAT_BGRA | OK_JPG_FLIP_Y);
+    fclose_buf(file);
+
+    if(image->data)
+    {
+    	printf("Got image ");
+        printf(" Size: %li x %li\n", (uint32_t)image->width, (uint32_t)image->height);
+
+		uint32_t xsize = image->width;
+		uint32_t ysize = image->height;
+		uint32_t length = image->width * image->height * 4;
+		uint8_t *dst = image->data;
+
+		writeToBMP(dst, length, 4, xsize, ysize);
+    }
+    else
+    {
+		printf("err msg = %s\n", image->error_message);
+    }
+
+    ok_jpg_free(image);
+}
+
 int main()
 {
+
+#ifndef USE_FILE_BUFFER
 	dec_png(1);
 	dec_jpg(2);
+#else
+	dec_png_buf();
+	dec_jpg_buf();
+#endif
 
     return 0;
 }

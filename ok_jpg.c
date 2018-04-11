@@ -28,6 +28,7 @@
    https://github.com/enmasse/jpeg_read/blob/master/jpeg_read.py
  */
 
+#include "user_file_buf.h"
 #include "ok_jpg.h"
 #include <stdlib.h>
 #include <string.h>
@@ -216,6 +217,7 @@ static bool ok_seek(ok_jpg_decoder *decoder, long length) {
 
 #ifndef OK_NO_STDIO
 
+#ifndef USE_FILE_BUFFER
 static size_t ok_file_read_func(void *user_data, uint8_t *buffer, size_t length) {
     return fread(buffer, 1, length, (FILE *)user_data);
 }
@@ -223,6 +225,15 @@ static size_t ok_file_read_func(void *user_data, uint8_t *buffer, size_t length)
 static bool ok_file_seek_func(void *user_data, long count) {
     return fseek((FILE *)user_data, count, SEEK_CUR) == 0;
 }
+#else
+static size_t ok_file_read_func(void *user_data, uint8_t *buffer, size_t length) {
+	return fread_buf((FILE_BUF * )user_data, buffer, length);
+}
+
+static bool ok_file_seek_func(void *user_data, long count) {
+	return fseek_buf((FILE_BUF *)user_data, count) == 0;
+}
+#endif
 
 #endif
 
@@ -812,6 +823,7 @@ static inline void ok_jpg_idct_1d_col_16(const int16_t *in, int *out) {
 // Output is scaled by (1 << 12) * sqrt(2) / (1 << out_shift)
 static inline void ok_jpg_idct_1d_row_8(int h, const int *in, uint8_t *out) {
     static const int out_shift = 19;
+	static int offset = 0;  //cyang modify
 
     int t0, t1, t2;
     int p0, p1, p2, p3;
@@ -821,7 +833,7 @@ static inline void ok_jpg_idct_1d_row_8(int h, const int *in, uint8_t *out) {
         // Quick check to avoid mults
         if (in[1] == 0 && in[2] == 0 && in[3] == 0 && in[4] == 0 &&
             in[5] == 0 && in[6] == 0 && in[7] == 0) {
-            static const int offset = 1 << (out_shift - 12 - 1);
+            offset = 1 << (out_shift - 12 - 1);
             t0 = (in[0] + offset) >> (out_shift - 12);
             memset(out, ok_jpg_clip_uint8(t0 + 128), 8);
         } else {
@@ -843,6 +855,7 @@ static inline void ok_jpg_idct_1d_row_8(int h, const int *in, uint8_t *out) {
 // Output is scaled by (1 << 12) * sqrt(2) / (1 << out_shift)
 static inline void ok_jpg_idct_1d_row_16(int h, const int *in, uint8_t *out) {
     static const int out_shift = 19;
+	static int offset = 0;  //cyang modify
 
     int t0, t1, t2;
     int p0, p1, p2, p3, p4, p5, p6, p7;
@@ -852,7 +865,7 @@ static inline void ok_jpg_idct_1d_row_16(int h, const int *in, uint8_t *out) {
         // Quick check to avoid mults
         if (in[1] == 0 && in[2] == 0 && in[3] == 0 && in[4] == 0 &&
             in[5] == 0 && in[6] == 0 && in[7] == 0) {
-            static const int offset = 1 << (out_shift - 12 - 1);
+            offset = 1 << (out_shift - 12 - 1);
             t0 = (in[0] + offset) >> (out_shift - 12);
             memset(out, ok_jpg_clip_uint8(t0 + 128), 16);
         } else {

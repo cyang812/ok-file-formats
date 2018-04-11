@@ -19,6 +19,7 @@
  OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "user_file_buf.h"
 #include "ok_png.h"
 #include <stdlib.h>
 #include <string.h>
@@ -136,6 +137,7 @@ static bool ok_seek(ok_png_decoder *decoder, long length) {
 
 #ifndef OK_NO_STDIO
 
+#ifndef USE_FILE_BUFFER
 static size_t ok_file_read_func(void *user_data, uint8_t *buffer, size_t length) {
     return fread(buffer, 1, length, (FILE *)user_data);
 }
@@ -143,6 +145,15 @@ static size_t ok_file_read_func(void *user_data, uint8_t *buffer, size_t length)
 static bool ok_file_seek_func(void *user_data, long count) {
     return fseek((FILE *)user_data, count, SEEK_CUR) == 0;
 }
+#else
+static size_t ok_file_read_func(void *user_data, uint8_t *buffer, size_t length) {
+	return fread_buf((FILE_BUF * )user_data, buffer, length);
+}
+
+static bool ok_file_seek_func(void *user_data, long count) {
+	return fseek_buf((FILE_BUF *)user_data, count) == 0;
+}
+#endif
 
 #endif
 
