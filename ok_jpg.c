@@ -538,7 +538,9 @@ static void ok_jpg_convert_data_unit_color(const uint8_t *y, const uint8_t *cb, 
             uint8_t *out = output;
             for (int x = 0; x < max_width; x++) {
                 ok_jpg_convert_YCbCr_to_RGB(y[x], cb[x], cr[x], out, out + 1, out + 2);
-                out[3] = 0xff;
+                #ifndef JUST_USE_RGB
+                out[3] = 0xff;  //cyang modify
+                #endif
                 out += x_inc;
             }
             y += C_WIDTH;
@@ -552,7 +554,9 @@ static void ok_jpg_convert_data_unit_color(const uint8_t *y, const uint8_t *cb, 
             uint8_t *out = output;
             for (int x = 0; x < max_width; x++) {
                 ok_jpg_convert_YCbCr_to_RGB(y[x], cb[x], cr[x], out + 2, out + 1, out);
-                out[3] = 0xff;
+                #ifndef JUST_USE_RGB
+                out[3] = 0xff;  //cyang modify
+                #endif
                 out += x_inc;
             }
             y += C_WIDTH;
@@ -570,8 +574,13 @@ static void ok_jpg_convert_data_unit(ok_jpg_decoder *decoder, int data_unit_x, i
     int y = data_unit_y * c->V * 8;
     const int width = min(c->H * 8, decoder->in_width - x);
     const int height = min(c->V * 8, decoder->in_height - y);
+#ifndef JUST_USE_RGB
     int x_inc = 4;
-    int y_inc = (int)(decoder->dst_stride ? decoder->dst_stride : jpg->width * 4);
+	int y_inc = (int)(decoder->dst_stride ? decoder->dst_stride : jpg->width * 4);	
+#else
+    int x_inc = 3; //cyang modify
+   	int y_inc = (int)(decoder->dst_stride ? decoder->dst_stride : jpg->width * 3);//cyang modify
+#endif
     uint8_t *data = decoder->dst_buffer;
     if (decoder->rotate) {
         int temp = x;
@@ -1584,7 +1593,13 @@ static bool ok_jpg_read_sof(ok_jpg_decoder *decoder) {
         }
 
         if (!decoder->dst_buffer) {
-            uint64_t dst_stride = decoder->dst_stride ? decoder->dst_stride : jpg->width * 4;
+			//cyang add for debug
+			printf("malloc dst_buffer!\n");
+	    #ifndef JUST_USE_RGB    	
+            uint64_t dst_stride = decoder->dst_stride ? decoder->dst_stride : jpg->width * 4; 
+        #else 
+            uint64_t dst_stride = decoder->dst_stride ? decoder->dst_stride : jpg->width * 3; //cyang modify        
+        #endif
             uint64_t size = dst_stride * jpg->height;
             size_t platform_size = (size_t)size;
             if (platform_size == size) {

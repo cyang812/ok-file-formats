@@ -63,6 +63,12 @@
 extern "C" {
 #endif
 
+//cyang add 
+/*
+ *  use RGB color format
+ */
+//#define JUST_USE_RGB
+
 /**
  * The data returned from #ok_jpg_read() or #ok_jpg_read_info().
  */
@@ -85,7 +91,7 @@ typedef enum {
     /// the last row in the image.
     OK_JPG_FLIP_Y = (1 << 2),
     /// Set to read an image's dimensions and color format without reading the image data.
-    OK_JPG_INFO_ONLY = (1 << 3)
+    OK_JPG_INFO_ONLY = (1 << 3),
 
 } ok_jpg_decode_flags;
 

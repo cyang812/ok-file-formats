@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define USE_FILE_BUFFER
+//#define USE_FILE_BUFFER
 
 typedef struct
 {
